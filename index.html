@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather Checker</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+    }
+
+    .container {
+      width: 350px;
+      background: rgba(255,255,255,0.15);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 4px;
+    }
+
+    .weather {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .forecast {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+
+    .card {
+      background: rgba(0,0,0,0.25);
+      padding: 8px;
+      border-radius: 8px;
+      width: 60px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🌦 Weather Checker</h2>
+
+  <input id="city" placeholder="Enter city name">
+  <br>
+
+  <button onclick="fetchWeather()">Search</button>
+  <button onclick="toggleTemp()">°C / °F</button>
+
+  <div id="weather" class="weather"></div>
+  <div id="forecast" class="forecast"></div>
+</div>
+
+<script>
+  const apiKey = "34dcd8e84a5520449ff206228fef396c";
+  let unit = "metric";
+
+  async function fetchWeather() {
+    const city = document.getElementById("city").value;
+    if (!city) {
+      alert("Please enter a city");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${unit}&appid=${apiKey}`
+      );
+      const data = await res.json();
+
+      if (data.cod !== 200) {
+        document.getElementById("weather").innerHTML = "City not found ❌";
+        return;
+      }
+
+      document.getElementById("weather").innerHTML = `
+        <h3>${data.name}, ${data.sys.country}</h3>
+        <p>🌡 ${data.main.temp}°</p>
+        <p>${data.weather[0].description}</p>
+        <p>💧 ${data.main.humidity}% | 💨 ${data.wind.speed}</p>
+      `;
+
+      loadForecast(city);
+    } catch (err) {
+      document.getElementById("weather").innerHTML = "Error loading data ⚠️";
+    }
+  }
+
+  async function loadForecast(city) {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=${unit}&appid=${apiKey}`
+    );
+    const data = await res.json();
+
+    const forecastDiv = document.getElementById("forecast");
+    forecastDiv.innerHTML = "";
+
+    for (let i = 8; i <= 32; i += 8) {
+      const day = data.list[i];
+      forecastDiv.innerHTML += `
+        <div class="card">
+          <div>${day.dt_txt.split(" ")[0]}</div>
+          <div>${day.main.temp}°</div>
+        </div>
+      `;
+    }
+  }
+
+  function toggleTemp() {
+    unit = unit === "metric" ? "imperial" : "metric";
+    fetchWeather();
+  }
+</script>
+
+</body>
+</html>
